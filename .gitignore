@@ -24,9 +24,7 @@ htmlcov/
 
 histoqc/_version.py
 
-histoqc_output_20211028-105331/*
-histoqc_output_20211028-123902/*
-histoqc_output_20211028-124508/*
+histoqc_output*
 .histoqc_pkg_data_tmplios8zft/*
 
 .vscode/*
