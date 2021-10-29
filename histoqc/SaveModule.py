@@ -42,6 +42,4 @@ def saveThumbnails(s, params):
     img = s.getImgThumb(params.get("image_work_size", "1.25x"))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb.png", img)
 
-    img = s.getImgThumb(params.get("small_dim", 500))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb_small.png", img)
     return

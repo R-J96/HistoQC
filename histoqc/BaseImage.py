@@ -7,6 +7,7 @@ from distutils.util import strtobool
 
 #os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 import openslide
+from tiatoolbox.wsicore.wsireader import get_wsireader
 
 
 def printMaskHelper(type, prev_mask, curr_mask):
@@ -27,8 +28,11 @@ def printMaskHelper(type, prev_mask, curr_mask):
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s, params):
     logging.info(f"{s['filename']} - \tgetMag")
-    osh = s["os_handle"]
-    mag = osh.properties.get("openslide.objective-power", "NA")
+    # TODO: refactor variable names here
+    osh = s["metadata"]
+    # osh = s["os_handle"]
+    # mag = osh.properties.get("openslide.objective-power", "NA")
+    mag = osh["objective_power"]
     if (
             mag == "NA"):  # openslide doesn't set objective-power for all SVS files: https://github.com/openslide/openslide/issues/247
         mag = osh.properties.get("aperio.AppMag", "NA")
@@ -60,8 +64,9 @@ class BaseImage(dict):
         self["outdir"] = fname_outdir
         self["dir"] = os.path.dirname(fname)
 
-        self["os_handle"] = openslide.OpenSlide(fname)
-        self["image_base_size"] = self["os_handle"].dimensions
+        self["os_handle"] = get_wsireader(fname)
+        self["metadata"] = self["os_handle"].info.as_dict()
+        self["image_base_size"] = self["metadata"]['slide_dimensions']
         self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
         self["base_mag"] = getMag(self, params)
@@ -100,26 +105,6 @@ class BaseImage(dict):
             osh = self["os_handle"]
             if dim.replace(".", "0", 1).isdigit(): #check to see if dim is a number
                 dim = float(dim)
-                if dim < 1 and not dim.is_integer():  # specifying a downscale factor from base
-                    new_dim = np.asarray(osh.dimensions) * dim
-                    self[key] = np.array(osh.get_thumbnail(new_dim))
-                elif dim < 100:  # assume it is a level in the openslide pyramid instead of a direct request
-                    dim = int(dim)
-                    if dim >= osh.level_count:
-                        dim = osh.level_count - 1
-                        calling_class = inspect.stack()[1][3]
-                        logging.error(
-                            f"{self['filename']}: Desired Image Level {dim+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
-                        self["warnings"].append(
-                            f"Desired Image Level {dim+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
-                    logging.info(
-                        f"{self['filename']} - \t\tloading image from level {dim} of size {osh.level_dimensions[dim]}")
-                    img = osh.read_region((0, 0), dim, osh.level_dimensions[dim])
-                    self[key] = np.asarray(img)[:, :, 0:3]
-                else:  # assume its an explicit size, *WARNING* this will likely cause different images to have different
-                    # perceived magnifications!
-                    logging.info(f"{self['filename']} - \t\tcreating image thumb of size {str(dim)}")
-                    self[key] = np.array(osh.get_thumbnail((dim, dim)))
             elif "X" in dim.upper():  # specifies a desired operating magnification
 
                 base_mag = self["base_mag"]
@@ -131,32 +116,21 @@ class BaseImage(dict):
                     return -1
 
                 target_mag = float(dim.upper().split("X")[0])
-
-                down_factor = base_mag / target_mag
-                level = osh.get_best_level_for_downsample(down_factor)
-                relative_down = down_factor / osh.level_downsamples[level]
-                if relative_down == 1.0: #there exists an open slide level exactly for this requested mag
-                    output = osh.read_region((0, 0), level, osh.level_dimensions[level])
-                    output = np.asarray(output)[:, :, 0:3]
-                else: #there does not exist an openslide level for this mag, need to create ony dynamically
-                    win_size = 2048
-                    win_size_down = int(win_size * 1 / relative_down)
-                    dim_base = osh.level_dimensions[0]
-                    output = []
-                    for x in range(0, dim_base[0], round(win_size * osh.level_downsamples[level])):
-                        row_piece = []
-                        for y in range(0, dim_base[1], round(win_size * osh.level_downsamples[level])):
-                            aa = osh.read_region((x, y), level, (win_size, win_size))
-                            bb = aa.resize((win_size_down, win_size_down))
-                            row_piece.append(bb)
-                        row_piece = np.concatenate(row_piece, axis=0)[:, :, 0:3]
-                        output.append(row_piece)
-
-                    output = np.concatenate(output, axis=1)
-                    output = output[0:round(dim_base[1] * 1 / down_factor), 0:round(dim_base[0] * 1 / down_factor), :]
+                
+                output = osh.slide_thumbnail(resolution=float(dim.replace("x","",1)))
                 self[key] = output
             else:
                 logging.error(
                     f"{self['filename']}: Unknown image level setting: {dim}!")
                 return -1
         return self[key]
+    
+# if __name__ == '__main__':
+#     import configparser
+#     file_name = "/data/UHCW/WSIs_jp2/wsi_test/H05-20260_A1LEV1-3_1.jp2"
+#     fname_outdir = "./test/output"
+#     config_test = configparser.ConfigParser()
+#     config_test.read_file(open('/home/robj/Projects/HistoQC/histoqc/config/config_first.ini'))
+#     # config_test = [('image_work_size', '1.25x'), ('mask_statistics', 'relative2mask'), ('confirm_base_mag', 'False')]
+#     test = BaseImage(file_name, fname_outdir, dict(config_test.items("BaseImage.BaseImage")))
+#     print(test['base_mag'])
