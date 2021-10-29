@@ -1,0 +1,34 @@
+name: histoQC
+channels:
+  - conda
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.8
+  - Click
+  - cython
+  - dill
+  - h5py
+  - matplotlib
+  - numpy
+  - opencv>=4.0
+  - openjpeg>=2.3.0
+  - pillow
+  - pip
+  - pyyaml>=5.1
+  - requests
+  - pixman<0.38.0
+  - openslide
+  - pandas
+  - glymur
+  - scikit-learn>=0.23.2
+  - scikit-image
+  - torchvision
+  - pytorch
+  - tiatoolbox==0.8.0
+  - tqdm
+  - jupyterlab
+  - pip:
+    - openslide-python==1.1.2
+    - importlib-resources

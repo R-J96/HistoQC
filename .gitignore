@@ -23,5 +23,10 @@ venv/
 htmlcov/
 
 histoqc/_version.py
-environment.yml
 
+histoqc_output_20211028-105331/*
+histoqc_output_20211028-123902/*
+histoqc_output_20211028-124508/*
+.histoqc_pkg_data_tmplios8zft/*
+
+.vscode/*
