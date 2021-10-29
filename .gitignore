@@ -25,6 +25,6 @@ htmlcov/
 histoqc/_version.py
 
 histoqc_output*
-.histoqc_pkg_data_tmplios8zft/*
+.histoqc_pkg_data*
 
 .vscode/*
