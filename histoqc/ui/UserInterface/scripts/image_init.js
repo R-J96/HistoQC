@@ -167,7 +167,7 @@ function generate_img_block (blk_class, file_name, img_type, compare_type, img_l
 function generate_img_src (file_name, img_type_index, use_small=false) {
 	var image_extension = DEFAULT_IMAGE_EXTENSIONS[img_type_index];
 	if (use_small && SMALL_IMAGE_EXTENSIONS.indexOf(image_extension) >= 0) {
-		image_extension = image_extension.split(".")[0] + "_small.png";
+		image_extension = image_extension.split(".")[0] + ".png";
 	}
 	return DATA_PATH + file_name + "/" + file_name + image_extension
 
