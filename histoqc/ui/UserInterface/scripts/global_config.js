@@ -3,7 +3,7 @@
  **********************************************/
 
 /***************** SYSTEM CONFIG **************/
-var DATA_PATH = "./Data/";
+var DATA_PATH = "./Data/results_test/";
 var OPEN_WITH_TABLE = true,
 	OPEN_WITH_CHART = true,
 	OPEN_WITH_IMAGE = true;

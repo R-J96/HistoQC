@@ -28,3 +28,4 @@ histoqc_output*
 .histoqc_pkg_data*
 
 .vscode/*
+results/
